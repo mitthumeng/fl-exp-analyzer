@@ -2,6 +2,7 @@ import sys
 
 from fl_analyzer.parser import parse_log
 from fl_analyzer.metrics import compute_summary
+from fl_analyzer.visualization import plot_metrics
 
 
 def main():
@@ -27,6 +28,10 @@ def main():
         f"Average Accuracy (Last 3 Rounds): "
         f"{summary['avg_last_3_accuracy']:.4f}"
     )
+
+    plot_metrics(records)
+
+    print("Plots saved to results/")
 
 
 if __name__ == "__main__":
