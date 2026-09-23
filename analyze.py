@@ -1,5 +1,5 @@
 import sys
-
+from fl_analyzer.exporter import export_summary
 from fl_analyzer.parser import parse_log
 from fl_analyzer.metrics import compute_summary
 from fl_analyzer.visualization import plot_metrics
@@ -30,8 +30,10 @@ def main():
     )
 
     plot_metrics(records)
+    export_summary(summary)
 
     print("Plots saved to results/")
+    print("Summary saved to results/summary.csv")
 
 
 if __name__ == "__main__":
