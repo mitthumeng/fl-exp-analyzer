@@ -14,6 +14,7 @@ from fl_analyzer.grouping import (
     export_dataset_aggregation_summary,
     export_attack_summary,
     export_dataset_attack_aggregation_summary,
+    export_custom_group_summary,
 )
 
 
@@ -399,6 +400,20 @@ def main():
         "  results/"
         "dataset_attack_aggregation_summary.csv"
     )
+
+    custom_filename = (
+        "results/group_by_"
+        + "_".join(args.group_by)
+        + ".csv"
+    )
+
+    export_custom_group_summary(
+        custom_group_results,
+        args.group_by,
+        custom_filename,
+    )
+
+    print(f"  {custom_filename}")
 
 
 if __name__ == "__main__":

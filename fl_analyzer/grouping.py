@@ -410,3 +410,33 @@ def group_by_dataset_attack_aggregation(results):
         results,
         keys=["dataset", "attack", "aggregation"],
     )
+
+def export_custom_group_summary(
+    summaries,
+    keys,
+    output_path,
+):
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    fieldnames = (
+        list(keys)
+        + [
+            "experiments",
+            "mean_final_accuracy",
+            "std_final_accuracy",
+            "mean_best_accuracy",
+            "std_best_accuracy",
+            "mean_last_3_accuracy",
+            "std_last_3_accuracy",
+        ]
+    )
+
+    with open(output_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+
+        for item in summaries:
+            writer.writerow({
+                field: item[field]
+                for field in fieldnames
+            })
