@@ -3,6 +3,7 @@ from pathlib import Path
 
 from fl_analyzer.parser import parse_log
 from fl_analyzer.metrics import compute_summary
+from fl_analyzer.comparison import export_comparison
 
 
 def analyze_file(file_path):
@@ -71,6 +72,8 @@ def main():
         return
 
     print_comparison(results)
+    export_comparison(results)
+    print("Comparison saved to results/comparison.csv")
 
 
 if __name__ == "__main__":
