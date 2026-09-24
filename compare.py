@@ -14,6 +14,7 @@ def analyze_file(file_path):
         return None
 
     if not records:
+        print(f"Warning: no valid records found in {file_path}")
         return None
 
     summary = compute_summary(records)
@@ -26,6 +27,20 @@ def analyze_file(file_path):
         "best_round": summary["best_round"],
         "avg_last_3_accuracy": summary["avg_last_3_accuracy"],
     }
+
+
+def collect_log_files(inputs):
+    log_files = []
+
+    for item in inputs:
+        path = Path(item)
+
+        if path.is_dir():
+            log_files.extend(sorted(path.glob("*.log")))
+        else:
+            log_files.append(path)
+
+    return log_files
 
 
 def print_comparison(results):
@@ -52,26 +67,33 @@ def print_comparison(results):
 
 
 def main():
-    if len(sys.argv) < 3:
-        print("Usage: python compare.py <log_file_1> <log_file_2> [...]")
+    if len(sys.argv) < 2:
+        print(
+            "Usage: python compare.py "
+            "<log_file_or_directory> [more_files_or_directories ...]"
+        )
+        return
+
+    log_files = collect_log_files(sys.argv[1:])
+
+    if not log_files:
+        print("No log files found.")
         return
 
     results = []
 
-    for file_path in sys.argv[1:]:
+    for file_path in log_files:
         result = analyze_file(file_path)
 
-        if result is None:
-            print(f"Warning: no valid records found in {file_path}")
-            continue
-
-        results.append(result)
+        if result is not None:
+            results.append(result)
 
     if not results:
         print("No valid experiments found.")
         return
 
     print_comparison(results)
+
     export_comparison(results)
     print("Comparison saved to results/comparison.csv")
 
