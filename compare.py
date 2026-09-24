@@ -5,6 +5,7 @@ from fl_analyzer.parser import parse_log
 from fl_analyzer.metrics import compute_summary
 from fl_analyzer.comparison import export_comparison
 from fl_analyzer.parser import parse_log, parse_metadata
+from fl_analyzer.grouping import group_by_aggregation
 
 
 def analyze_file(file_path):
@@ -71,6 +72,27 @@ def print_comparison(results):
             f"{result['avg_last_3_accuracy']:>12.4f}"
         )
 
+def print_group_summary(grouped_results):
+    print("\nAggregation Summary")
+
+    print(
+        f"{'Aggregation':<20}"
+        f"{'Experiments':>12}"
+        f"{'Mean Final':>14}"
+        f"{'Mean Best':>14}"
+        f"{'Mean Last 3':>14}"
+    )
+
+    print("-" * 74)
+
+    for item in grouped_results:
+        print(
+            f"{item['aggregation']:<20}"
+            f"{item['experiments']:>12}"
+            f"{item['mean_final_accuracy']:>14.4f}"
+            f"{item['mean_best_accuracy']:>14.4f}"
+            f"{item['mean_last_3_accuracy']:>14.4f}"
+        )
 
 def main():
     if len(sys.argv) < 2:
@@ -99,6 +121,9 @@ def main():
         return
 
     print_comparison(results)
+
+    grouped_results = group_by_aggregation(results)
+    print_group_summary(grouped_results)
 
     export_comparison(results)
     print("Comparison saved to results/comparison.csv")
