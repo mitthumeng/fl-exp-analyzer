@@ -6,7 +6,11 @@ from fl_analyzer.metrics import compute_summary
 
 
 def analyze_file(file_path):
-    records = parse_log(file_path)
+    try:
+        records = parse_log(file_path)
+    except (FileNotFoundError, ValueError) as exc:
+        print(f"Warning: {exc}")
+        return None
 
     if not records:
         return None

@@ -29,7 +29,11 @@ def main():
     parser = build_parser()
     args = parser.parse_args()
 
-    records = parse_log(args.log_file)
+    try:
+        records = parse_log(args.log_file)
+    except (FileNotFoundError, ValueError) as exc:
+        print(f"Error: {exc}")
+        return
 
     if not records:
         print("No valid experiment records found.")
