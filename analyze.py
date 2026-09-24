@@ -1,18 +1,35 @@
-import sys
-from fl_analyzer.exporter import export_summary
+import argparse
+
 from fl_analyzer.parser import parse_log
 from fl_analyzer.metrics import compute_summary
 from fl_analyzer.visualization import plot_metrics
+from fl_analyzer.exporter import export_summary
+
+
+def build_parser():
+    parser = argparse.ArgumentParser(
+        description="Analyze a federated learning experiment log."
+    )
+
+    parser.add_argument(
+        "log_file",
+        help="Path to the experiment log file.",
+    )
+
+    parser.add_argument(
+        "--output",
+        default="results",
+        help="Directory used to store plots and CSV output.",
+    )
+
+    return parser
 
 
 def main():
-    if len(sys.argv) != 2:
-        print("Usage: python analyze.py <log_file>")
-        return
+    parser = build_parser()
+    args = parser.parse_args()
 
-    log_file = sys.argv[1]
-
-    records = parse_log(log_file)
+    records = parse_log(args.log_file)
 
     if not records:
         print("No valid experiment records found.")
@@ -29,11 +46,13 @@ def main():
         f"{summary['avg_last_3_accuracy']:.4f}"
     )
 
-    plot_metrics(records)
-    export_summary(summary)
+    plot_metrics(records, output_dir=args.output)
 
-    print("Plots saved to results/")
-    print("Summary saved to results/summary.csv")
+    summary_path = f"{args.output}/summary.csv"
+    export_summary(summary, output_path=summary_path)
+
+    print(f"Plots saved to {args.output}/")
+    print(f"Summary saved to {summary_path}")
 
 
 if __name__ == "__main__":
