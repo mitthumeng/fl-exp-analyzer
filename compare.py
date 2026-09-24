@@ -7,8 +7,74 @@ from fl_analyzer.comparison import export_comparison
 from fl_analyzer.parser import parse_log, parse_metadata
 from fl_analyzer.grouping import (
     group_by_aggregation,
+    group_by_dataset_and_aggregation,
+    group_by_attack,
     export_group_summary,
+    export_dataset_aggregation_summary,
+    export_attack_summary,
 )
+
+def print_attack_summary(summaries):
+    print("\nAttack Summary")
+
+    print(
+        f"{'Attack':<20}"
+        f"{'N':>6}"
+        f"{'Final Acc':>20}"
+        f"{'Best Acc':>20}"
+    )
+
+    print("-" * 66)
+
+    for item in summaries:
+        final_text = (
+            f"{item['mean_final_accuracy']:.4f} "
+            f"± {item['std_final_accuracy']:.4f}"
+        )
+
+        best_text = (
+            f"{item['mean_best_accuracy']:.4f} "
+            f"± {item['std_best_accuracy']:.4f}"
+        )
+
+        print(
+            f"{item['attack']:<20}"
+            f"{item['experiments']:>6}"
+            f"{final_text:>20}"
+            f"{best_text:>20}"
+        )
+
+def print_dataset_aggregation_summary(summaries):
+    print("\nDataset + Aggregation Summary")
+
+    print(
+        f"{'Dataset':<15}"
+        f"{'Aggregation':<16}"
+        f"{'N':>6}"
+        f"{'Final Acc':>20}"
+        f"{'Best Acc':>20}"
+    )
+
+    print("-" * 77)
+
+    for item in summaries:
+        final_text = (
+            f"{item['mean_final_accuracy']:.4f} "
+            f"± {item['std_final_accuracy']:.4f}"
+        )
+
+        best_text = (
+            f"{item['mean_best_accuracy']:.4f} "
+            f"± {item['std_best_accuracy']:.4f}"
+        )
+
+        print(
+            f"{item['dataset']:<15}"
+            f"{item['aggregation']:<16}"
+            f"{item['experiments']:>6}"
+            f"{final_text:>20}"
+            f"{best_text:>20}"
+        )
 
 
 def analyze_file(file_path):
@@ -143,13 +209,41 @@ def main():
     grouped_results = group_by_aggregation(results)
     print_group_summary(grouped_results)
 
+    dataset_aggregation_results = group_by_dataset_and_aggregation(results)
+
+    print_dataset_aggregation_summary(
+        dataset_aggregation_results
+    )
+
     export_comparison(results)
     export_group_summary(grouped_results)
+    export_dataset_aggregation_summary(
+        dataset_aggregation_results
+    )
 
     print("Comparison saved to results/comparison.csv")
     print(
         "Aggregation summary saved to "
         "results/aggregation_summary.csv"
+    )
+    print(
+        "Dataset-aggregation summary saved to "
+        "results/dataset_aggregation_summary.csv"
+    )
+
+    attack_results = group_by_attack(results)
+
+    print_attack_summary(
+        attack_results
+    )
+
+    export_attack_summary(
+        attack_results
+    )
+
+    print(
+        "Attack summary saved to "
+        "results/attack_summary.csv"
     )
 
 
