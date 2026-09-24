@@ -9,10 +9,46 @@ from fl_analyzer.grouping import (
     group_by_aggregation,
     group_by_dataset_and_aggregation,
     group_by_attack,
+    group_by_dataset_attack_aggregation,
     export_group_summary,
     export_dataset_aggregation_summary,
     export_attack_summary,
+    export_dataset_attack_aggregation_summary,
 )
+
+def print_dataset_attack_aggregation_summary(summaries):
+    print("\nDataset + Attack + Aggregation Summary")
+
+    print(
+        f"{'Dataset':<12}"
+        f"{'Attack':<18}"
+        f"{'Aggregation':<16}"
+        f"{'N':>6}"
+        f"{'Final Acc':>20}"
+        f"{'Best Acc':>20}"
+    )
+
+    print("-" * 92)
+
+    for item in summaries:
+        final_text = (
+            f"{item['mean_final_accuracy']:.4f} "
+            f"± {item['std_final_accuracy']:.4f}"
+        )
+
+        best_text = (
+            f"{item['mean_best_accuracy']:.4f} "
+            f"± {item['std_best_accuracy']:.4f}"
+        )
+
+        print(
+            f"{item['dataset']:<12}"
+            f"{item['attack']:<18}"
+            f"{item['aggregation']:<16}"
+            f"{item['experiments']:>6}"
+            f"{final_text:>20}"
+            f"{best_text:>20}"
+        )
 
 def print_attack_summary(summaries):
     print("\nAttack Summary")
@@ -246,6 +282,22 @@ def main():
         "results/attack_summary.csv"
     )
 
+    dataset_attack_aggregation_results = (
+    group_by_dataset_attack_aggregation(results)
+    )
+
+    print_dataset_attack_aggregation_summary(
+        dataset_attack_aggregation_results
+    )
+
+    export_dataset_attack_aggregation_summary(
+        dataset_attack_aggregation_results
+    )
+
+    print(
+        "Dataset-attack-aggregation summary saved to "
+        "results/dataset_attack_aggregation_summary.csv"
+    )
 
 if __name__ == "__main__":
     main()
