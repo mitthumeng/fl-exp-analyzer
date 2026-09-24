@@ -1,11 +1,11 @@
-import sys
+import argparse
 from pathlib import Path
 
-from fl_analyzer.parser import parse_log
+from fl_analyzer.parser import parse_log, parse_metadata
 from fl_analyzer.metrics import compute_summary
 from fl_analyzer.comparison import export_comparison
-from fl_analyzer.parser import parse_log, parse_metadata
 from fl_analyzer.grouping import (
+    group_results,
     group_by_aggregation,
     group_by_dataset_and_aggregation,
     group_by_attack,
@@ -16,107 +16,45 @@ from fl_analyzer.grouping import (
     export_dataset_attack_aggregation_summary,
 )
 
-def print_dataset_attack_aggregation_summary(summaries):
-    print("\nDataset + Attack + Aggregation Summary")
 
-    print(
-        f"{'Dataset':<12}"
-        f"{'Attack':<18}"
-        f"{'Aggregation':<16}"
-        f"{'N':>6}"
-        f"{'Final Acc':>20}"
-        f"{'Best Acc':>20}"
+def build_parser():
+    parser = argparse.ArgumentParser(
+        description=(
+            "Compare multiple federated learning experiment logs "
+            "and generate grouped summaries."
+        )
     )
 
-    print("-" * 92)
-
-    for item in summaries:
-        final_text = (
-            f"{item['mean_final_accuracy']:.4f} "
-            f"± {item['std_final_accuracy']:.4f}"
-        )
-
-        best_text = (
-            f"{item['mean_best_accuracy']:.4f} "
-            f"± {item['std_best_accuracy']:.4f}"
-        )
-
-        print(
-            f"{item['dataset']:<12}"
-            f"{item['attack']:<18}"
-            f"{item['aggregation']:<16}"
-            f"{item['experiments']:>6}"
-            f"{final_text:>20}"
-            f"{best_text:>20}"
-        )
-
-def print_attack_summary(summaries):
-    print("\nAttack Summary")
-
-    print(
-        f"{'Attack':<20}"
-        f"{'N':>6}"
-        f"{'Final Acc':>20}"
-        f"{'Best Acc':>20}"
+    parser.add_argument(
+        "inputs",
+        nargs="+",
+        help="Log files or directories containing .log files.",
     )
 
-    print("-" * 66)
-
-    for item in summaries:
-        final_text = (
-            f"{item['mean_final_accuracy']:.4f} "
-            f"± {item['std_final_accuracy']:.4f}"
-        )
-
-        best_text = (
-            f"{item['mean_best_accuracy']:.4f} "
-            f"± {item['std_best_accuracy']:.4f}"
-        )
-
-        print(
-            f"{item['attack']:<20}"
-            f"{item['experiments']:>6}"
-            f"{final_text:>20}"
-            f"{best_text:>20}"
-        )
-
-def print_dataset_aggregation_summary(summaries):
-    print("\nDataset + Aggregation Summary")
-
-    print(
-        f"{'Dataset':<15}"
-        f"{'Aggregation':<16}"
-        f"{'N':>6}"
-        f"{'Final Acc':>20}"
-        f"{'Best Acc':>20}"
+    parser.add_argument(
+        "--group-by",
+        nargs="+",
+        choices=[
+            "dataset",
+            "attack",
+            "aggregation",
+            "seed",
+        ],
+        default=["aggregation"],
+        help=(
+            "Fields used for the custom grouped summary. "
+            "Default: aggregation"
+        ),
     )
 
-    print("-" * 77)
-
-    for item in summaries:
-        final_text = (
-            f"{item['mean_final_accuracy']:.4f} "
-            f"± {item['std_final_accuracy']:.4f}"
-        )
-
-        best_text = (
-            f"{item['mean_best_accuracy']:.4f} "
-            f"± {item['std_best_accuracy']:.4f}"
-        )
-
-        print(
-            f"{item['dataset']:<15}"
-            f"{item['aggregation']:<16}"
-            f"{item['experiments']:>6}"
-            f"{final_text:>20}"
-            f"{best_text:>20}"
-        )
+    return parser
 
 
 def analyze_file(file_path):
-    metadata = parse_metadata(file_path)
     try:
         records = parse_log(file_path)
+        metadata = parse_metadata(file_path)
+
     except (FileNotFoundError, ValueError) as exc:
         print(f"Warning: {exc}")
         return None
@@ -129,15 +67,15 @@ def analyze_file(file_path):
 
     return {
         "name": Path(file_path).stem,
+        "dataset": metadata.get("dataset", "Unknown"),
+        "aggregation": metadata.get("aggregation", "Unknown"),
+        "attack": metadata.get("attack", "Unknown"),
+        "seed": metadata.get("seed", "Unknown"),
         "rounds": summary["rounds"],
         "final_accuracy": summary["final_accuracy"],
         "best_accuracy": summary["best_accuracy"],
         "best_round": summary["best_round"],
         "avg_last_3_accuracy": summary["avg_last_3_accuracy"],
-        "dataset": metadata.get("dataset", "Unknown"),
-        "aggregation": metadata.get("aggregation", "Unknown"),
-        "attack": metadata.get("attack", "Unknown"),
-        "seed": metadata.get("seed", "Unknown"),
     }
 
 
@@ -156,26 +94,31 @@ def collect_log_files(inputs):
 
 
 def print_comparison(results):
+    print("\nExperiment Comparison")
+
     print(
-        f"{'Experiment':<20}"
-        f"{'Rounds':>8}"
+        f"{'Experiment':<18}"
+        f"{'Dataset':<12}"
+        f"{'Aggregation':<16}"
+        f"{'Attack':<18}"
+        f"{'Seed':>8}"
         f"{'Final Acc':>12}"
         f"{'Best Acc':>12}"
-        f"{'Best Round':>12}"
-        f"{'Avg Last 3':>12}"
     )
 
-    print("-" * 76)
+    print("-" * 96)
 
     for result in results:
         print(
-            f"{result['name']:<20}"
-            f"{result['rounds']:>8}"
+            f"{result['name']:<18}"
+            f"{str(result['dataset']):<12}"
+            f"{str(result['aggregation']):<16}"
+            f"{str(result['attack']):<18}"
+            f"{str(result['seed']):>8}"
             f"{result['final_accuracy']:>12.4f}"
             f"{result['best_accuracy']:>12.4f}"
-            f"{result['best_round']:>12}"
-            f"{result['avg_last_3_accuracy']:>12.4f}"
         )
+
 
 def print_group_summary(grouped_results):
     print("\nAggregation Summary")
@@ -214,15 +157,165 @@ def print_group_summary(grouped_results):
             f"{last_3_text:>20}"
         )
 
-def main():
-    if len(sys.argv) < 2:
-        print(
-            "Usage: python compare.py "
-            "<log_file_or_directory> [more_files_or_directories ...]"
-        )
-        return
 
-    log_files = collect_log_files(sys.argv[1:])
+def print_dataset_aggregation_summary(summaries):
+    print("\nDataset + Aggregation Summary")
+
+    print(
+        f"{'Dataset':<15}"
+        f"{'Aggregation':<16}"
+        f"{'N':>6}"
+        f"{'Final Acc':>20}"
+        f"{'Best Acc':>20}"
+    )
+
+    print("-" * 77)
+
+    for item in summaries:
+        final_text = (
+            f"{item['mean_final_accuracy']:.4f} "
+            f"± {item['std_final_accuracy']:.4f}"
+        )
+
+        best_text = (
+            f"{item['mean_best_accuracy']:.4f} "
+            f"± {item['std_best_accuracy']:.4f}"
+        )
+
+        print(
+            f"{item['dataset']:<15}"
+            f"{item['aggregation']:<16}"
+            f"{item['experiments']:>6}"
+            f"{final_text:>20}"
+            f"{best_text:>20}"
+        )
+
+
+def print_attack_summary(summaries):
+    print("\nAttack Summary")
+
+    print(
+        f"{'Attack':<20}"
+        f"{'N':>6}"
+        f"{'Final Acc':>20}"
+        f"{'Best Acc':>20}"
+    )
+
+    print("-" * 66)
+
+    for item in summaries:
+        final_text = (
+            f"{item['mean_final_accuracy']:.4f} "
+            f"± {item['std_final_accuracy']:.4f}"
+        )
+
+        best_text = (
+            f"{item['mean_best_accuracy']:.4f} "
+            f"± {item['std_best_accuracy']:.4f}"
+        )
+
+        print(
+            f"{item['attack']:<20}"
+            f"{item['experiments']:>6}"
+            f"{final_text:>20}"
+            f"{best_text:>20}"
+        )
+
+
+def print_dataset_attack_aggregation_summary(summaries):
+    print("\nDataset + Attack + Aggregation Summary")
+
+    print(
+        f"{'Dataset':<12}"
+        f"{'Attack':<18}"
+        f"{'Aggregation':<16}"
+        f"{'N':>6}"
+        f"{'Final Acc':>20}"
+        f"{'Best Acc':>20}"
+    )
+
+    print("-" * 92)
+
+    for item in summaries:
+        final_text = (
+            f"{item['mean_final_accuracy']:.4f} "
+            f"± {item['std_final_accuracy']:.4f}"
+        )
+
+        best_text = (
+            f"{item['mean_best_accuracy']:.4f} "
+            f"± {item['std_best_accuracy']:.4f}"
+        )
+
+        print(
+            f"{item['dataset']:<12}"
+            f"{item['attack']:<18}"
+            f"{item['aggregation']:<16}"
+            f"{item['experiments']:>6}"
+            f"{final_text:>20}"
+            f"{best_text:>20}"
+        )
+
+
+def print_custom_group_summary(summaries, keys):
+    print(
+        "\nCustom Group Summary "
+        f"({', '.join(keys)})"
+    )
+
+    key_width = 16
+
+    header = ""
+
+    for key in keys:
+        header += f"{key.title():<{key_width}}"
+
+    header += (
+        f"{'N':>6}"
+        f"{'Final Acc':>20}"
+        f"{'Best Acc':>20}"
+        f"{'Last 3 Acc':>20}"
+    )
+
+    print(header)
+    print("-" * len(header))
+
+    for item in summaries:
+        row = ""
+
+        for key in keys:
+            row += f"{str(item[key]):<{key_width}}"
+
+        final_text = (
+            f"{item['mean_final_accuracy']:.4f} "
+            f"± {item['std_final_accuracy']:.4f}"
+        )
+
+        best_text = (
+            f"{item['mean_best_accuracy']:.4f} "
+            f"± {item['std_best_accuracy']:.4f}"
+        )
+
+        last_3_text = (
+            f"{item['mean_last_3_accuracy']:.4f} "
+            f"± {item['std_last_3_accuracy']:.4f}"
+        )
+
+        row += (
+            f"{item['experiments']:>6}"
+            f"{final_text:>20}"
+            f"{best_text:>20}"
+            f"{last_3_text:>20}"
+        )
+
+        print(row)
+
+
+def main():
+    parser = build_parser()
+    args = parser.parse_args()
+
+    log_files = collect_log_files(args.inputs)
 
     if not log_files:
         print("No log files found.")
@@ -240,64 +333,73 @@ def main():
         print("No valid experiments found.")
         return
 
+    # Individual experiment comparison
     print_comparison(results)
 
-    grouped_results = group_by_aggregation(results)
-    print_group_summary(grouped_results)
+    # Aggregation-level summary
+    aggregation_results = group_by_aggregation(results)
+    print_group_summary(aggregation_results)
 
-    dataset_aggregation_results = group_by_dataset_and_aggregation(results)
-
+    # Dataset + aggregation summary
+    dataset_aggregation_results = (
+        group_by_dataset_and_aggregation(results)
+    )
     print_dataset_aggregation_summary(
         dataset_aggregation_results
     )
 
+    # Attack-level summary
+    attack_results = group_by_attack(results)
+    print_attack_summary(attack_results)
+
+    # Dataset + attack + aggregation summary
+    dataset_attack_aggregation_results = (
+        group_by_dataset_attack_aggregation(results)
+    )
+    print_dataset_attack_aggregation_summary(
+        dataset_attack_aggregation_results
+    )
+
+    # User-configurable grouping
+    custom_group_results = group_results(
+        results,
+        keys=args.group_by,
+    )
+
+    print_custom_group_summary(
+        custom_group_results,
+        args.group_by,
+    )
+
+    # Export CSV files
     export_comparison(results)
-    export_group_summary(grouped_results)
+
+    export_group_summary(
+        aggregation_results
+    )
+
     export_dataset_aggregation_summary(
         dataset_aggregation_results
-    )
-
-    print("Comparison saved to results/comparison.csv")
-    print(
-        "Aggregation summary saved to "
-        "results/aggregation_summary.csv"
-    )
-    print(
-        "Dataset-aggregation summary saved to "
-        "results/dataset_aggregation_summary.csv"
-    )
-
-    attack_results = group_by_attack(results)
-
-    print_attack_summary(
-        attack_results
     )
 
     export_attack_summary(
         attack_results
     )
 
-    print(
-        "Attack summary saved to "
-        "results/attack_summary.csv"
-    )
-
-    dataset_attack_aggregation_results = (
-    group_by_dataset_attack_aggregation(results)
-    )
-
-    print_dataset_attack_aggregation_summary(
-        dataset_attack_aggregation_results
-    )
-
     export_dataset_attack_aggregation_summary(
         dataset_attack_aggregation_results
     )
 
+    print("\nCSV files generated:")
+    print("  results/comparison.csv")
+    print("  results/aggregation_summary.csv")
+    print("  results/dataset_aggregation_summary.csv")
+    print("  results/attack_summary.csv")
     print(
-        "Dataset-attack-aggregation summary saved to "
-        "results/dataset_attack_aggregation_summary.csv"
+        "  results/"
+        "dataset_attack_aggregation_summary.csv"
     )
+
 
 if __name__ == "__main__":
     main()
