@@ -7,6 +7,37 @@ LOG_PATTERN = re.compile(
     r"\s*\|\s*Loss:\s*([0-9]*\.?[0-9]+)"
 )
 
+METADATA_PATTERNS = {
+    "dataset": re.compile(r"Dataset:\s*(.+)"),
+    "aggregation": re.compile(r"Aggregation:\s*(.+)"),
+    "attack": re.compile(r"Attack:\s*(.+)"),
+    "seed": re.compile(r"Seed:\s*(\d+)"),
+}
+
+
+def parse_metadata(file_path):
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"Log file not found: {file_path}")
+
+    metadata = {}
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+
+            for key, pattern in METADATA_PATTERNS.items():
+                match = pattern.search(line)
+
+                if match:
+                    value = match.group(1).strip()
+
+                    if key == "seed":
+                        value = int(value)
+
+                    metadata[key] = value
+
+    return metadata
+
 
 def parse_log(file_path):
     if not os.path.exists(file_path):

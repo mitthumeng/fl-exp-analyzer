@@ -4,9 +4,11 @@ from pathlib import Path
 from fl_analyzer.parser import parse_log
 from fl_analyzer.metrics import compute_summary
 from fl_analyzer.comparison import export_comparison
+from fl_analyzer.parser import parse_log, parse_metadata
 
 
 def analyze_file(file_path):
+    metadata = parse_metadata(file_path)
     try:
         records = parse_log(file_path)
     except (FileNotFoundError, ValueError) as exc:
@@ -26,6 +28,10 @@ def analyze_file(file_path):
         "best_accuracy": summary["best_accuracy"],
         "best_round": summary["best_round"],
         "avg_last_3_accuracy": summary["avg_last_3_accuracy"],
+        "dataset": metadata.get("dataset", "Unknown"),
+        "aggregation": metadata.get("aggregation", "Unknown"),
+        "attack": metadata.get("attack", "Unknown"),
+        "seed": metadata.get("seed", "Unknown"),
     }
 
 
