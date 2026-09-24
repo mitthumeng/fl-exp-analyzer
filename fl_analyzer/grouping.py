@@ -1,4 +1,6 @@
 from collections import defaultdict
+import csv
+import os
 
 
 def group_by_aggregation(results):
@@ -36,3 +38,29 @@ def group_by_aggregation(results):
         )
 
     return summaries
+
+def export_group_summary(
+    summaries,
+    output_path="results/aggregation_summary.csv",
+):
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    with open(output_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+
+        writer.writerow([
+            "aggregation",
+            "experiments",
+            "mean_final_accuracy",
+            "mean_best_accuracy",
+            "mean_last_3_accuracy",
+        ])
+
+        for item in summaries:
+            writer.writerow([
+                item["aggregation"],
+                item["experiments"],
+                item["mean_final_accuracy"],
+                item["mean_best_accuracy"],
+                item["mean_last_3_accuracy"],
+            ])

@@ -5,7 +5,10 @@ from fl_analyzer.parser import parse_log
 from fl_analyzer.metrics import compute_summary
 from fl_analyzer.comparison import export_comparison
 from fl_analyzer.parser import parse_log, parse_metadata
-from fl_analyzer.grouping import group_by_aggregation
+from fl_analyzer.grouping import (
+    group_by_aggregation,
+    export_group_summary,
+)
 
 
 def analyze_file(file_path):
@@ -126,7 +129,13 @@ def main():
     print_group_summary(grouped_results)
 
     export_comparison(results)
+    export_group_summary(grouped_results)
+
     print("Comparison saved to results/comparison.csv")
+    print(
+        "Aggregation summary saved to "
+        "results/aggregation_summary.csv"
+    )
 
 
 if __name__ == "__main__":
