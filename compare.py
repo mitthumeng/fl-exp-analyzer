@@ -79,22 +79,37 @@ def print_group_summary(grouped_results):
     print("\nAggregation Summary")
 
     print(
-        f"{'Aggregation':<20}"
-        f"{'Experiments':>12}"
-        f"{'Mean Final':>14}"
-        f"{'Mean Best':>14}"
-        f"{'Mean Last 3':>14}"
+        f"{'Aggregation':<16}"
+        f"{'N':>6}"
+        f"{'Final Acc':>20}"
+        f"{'Best Acc':>20}"
+        f"{'Last 3 Acc':>20}"
     )
 
-    print("-" * 74)
+    print("-" * 82)
 
     for item in grouped_results:
+        final_text = (
+            f"{item['mean_final_accuracy']:.4f} "
+            f"± {item['std_final_accuracy']:.4f}"
+        )
+
+        best_text = (
+            f"{item['mean_best_accuracy']:.4f} "
+            f"± {item['std_best_accuracy']:.4f}"
+        )
+
+        last_3_text = (
+            f"{item['mean_last_3_accuracy']:.4f} "
+            f"± {item['std_last_3_accuracy']:.4f}"
+        )
+
         print(
-            f"{item['aggregation']:<20}"
-            f"{item['experiments']:>12}"
-            f"{item['mean_final_accuracy']:>14.4f}"
-            f"{item['mean_best_accuracy']:>14.4f}"
-            f"{item['mean_last_3_accuracy']:>14.4f}"
+            f"{item['aggregation']:<16}"
+            f"{item['experiments']:>6}"
+            f"{final_text:>20}"
+            f"{best_text:>20}"
+            f"{last_3_text:>20}"
         )
 
 def main():

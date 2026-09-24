@@ -47,6 +47,12 @@ def test_group_by_aggregation():
     assert median["mean_best_accuracy"] == 0.69
     assert median["mean_last_3_accuracy"] == 0.67
 
+    assert fedavg["std_final_accuracy"] > 0
+    assert fedavg["std_best_accuracy"] > 0
+    assert fedavg["std_last_3_accuracy"] > 0
+
+    assert median["std_final_accuracy"] == 0.0
+
 
 def test_unknown_aggregation():
     results = [
