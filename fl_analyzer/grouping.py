@@ -327,3 +327,86 @@ def export_dataset_attack_aggregation_summary(
                 item["mean_last_3_accuracy"],
                 item["std_last_3_accuracy"],
             ])
+
+def group_results(results, keys):
+    groups = defaultdict(list)
+
+    for result in results:
+        group_key = tuple(
+            result.get(key, "Unknown")
+            for key in keys
+        )
+        groups[group_key].append(result)
+
+    summaries = []
+
+    for group_key, experiments in sorted(groups.items()):
+        count = len(experiments)
+
+        final_accuracies = [
+            item["final_accuracy"]
+            for item in experiments
+        ]
+        best_accuracies = [
+            item["best_accuracy"]
+            for item in experiments
+        ]
+        last_3_accuracies = [
+            item["avg_last_3_accuracy"]
+            for item in experiments
+        ]
+
+        summary = {
+            key: value
+            for key, value in zip(keys, group_key)
+        }
+
+        summary.update({
+            "experiments": count,
+            "mean_final_accuracy": statistics.mean(final_accuracies),
+            "std_final_accuracy": (
+                statistics.stdev(final_accuracies)
+                if count > 1 else 0.0
+            ),
+            "mean_best_accuracy": statistics.mean(best_accuracies),
+            "std_best_accuracy": (
+                statistics.stdev(best_accuracies)
+                if count > 1 else 0.0
+            ),
+            "mean_last_3_accuracy": statistics.mean(last_3_accuracies),
+            "std_last_3_accuracy": (
+                statistics.stdev(last_3_accuracies)
+                if count > 1 else 0.0
+            ),
+        })
+
+        summaries.append(summary)
+
+    return summaries
+
+def group_by_aggregation(results):
+    return group_results(
+        results,
+        keys=["aggregation"],
+    )
+
+
+def group_by_attack(results):
+    return group_results(
+        results,
+        keys=["attack"],
+    )
+
+
+def group_by_dataset_and_aggregation(results):
+    return group_results(
+        results,
+        keys=["dataset", "aggregation"],
+    )
+
+
+def group_by_dataset_attack_aggregation(results):
+    return group_results(
+        results,
+        keys=["dataset", "attack", "aggregation"],
+    )
