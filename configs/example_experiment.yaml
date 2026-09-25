@@ -1,0 +1,12 @@
+dataset: MNIST
+aggregation: FedAvg
+attack: LabelFlipping
+seed: 117
+
+rounds: 100
+local_epochs: 1
+batch_size: 64
+learning_rate: 0.05
+
+clients: 20
+malicious_ratio: 0.3
