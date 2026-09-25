@@ -1,6 +1,9 @@
 import argparse
 
-from fl_analyzer.registry import list_runs
+from fl_analyzer.registry import (
+    list_runs,
+    filter_runs,
+)
 
 
 def build_parser():
@@ -14,6 +17,38 @@ def build_parser():
         help="Directory containing managed experiment runs.",
     )
 
+    parser.add_argument(
+    "--dataset",
+    help="Filter runs by dataset.",
+    )
+
+    parser.add_argument(
+    "--aggregation",
+    help="Filter runs by aggregation method.",
+    )
+
+    parser.add_argument(
+    "--attack",
+    help="Filter runs by attack type.",
+    )
+
+    parser.add_argument(
+    "--seed",
+    type=int,
+    help="Filter runs by random seed.",
+    )
+
+    parser.add_argument(
+    "--status",
+    choices=[
+        "running",
+        "completed",
+        "failed",
+        "unknown",
+    ],
+    help="Filter runs by execution status.",
+    )
+
     return parser
 
 
@@ -22,6 +57,14 @@ def main():
     args = parser.parse_args()
 
     runs = list_runs(args.runs_dir)
+    runs = filter_runs(
+    runs,
+    dataset=args.dataset,
+    aggregation=args.aggregation,
+    attack=args.attack,
+    seed=args.seed,
+    status=args.status,
+)
 
     if not runs:
         print("No managed runs found.")

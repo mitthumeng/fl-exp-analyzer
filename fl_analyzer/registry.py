@@ -54,3 +54,36 @@ def list_runs(base_dir="runs"):
             runs.append(run)
 
     return runs
+
+def filter_runs(
+    runs,
+    dataset=None,
+    aggregation=None,
+    attack=None,
+    seed=None,
+    status=None,
+):
+    filtered = []
+
+    for run in runs:
+        if dataset is not None and run["dataset"] != dataset:
+            continue
+
+        if (
+            aggregation is not None
+            and run["aggregation"] != aggregation
+        ):
+            continue
+
+        if attack is not None and run["attack"] != attack:
+            continue
+
+        if seed is not None and run["seed"] != seed:
+            continue
+
+        if status is not None and run["status"] != status:
+            continue
+
+        filtered.append(run)
+
+    return filtered

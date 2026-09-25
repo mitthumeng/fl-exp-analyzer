@@ -1,6 +1,7 @@
 import json
 
 from fl_analyzer.registry import load_run, list_runs
+from fl_analyzer.registry import filter_runs
 
 
 def test_load_run(tmp_path):
@@ -96,3 +97,49 @@ def test_list_runs_missing_directory(tmp_path):
     runs = list_runs(tmp_path / "missing")
 
     assert runs == []
+
+def test_filter_runs():
+    runs = [
+        {
+            "dataset": "MNIST",
+            "aggregation": "FedAvg",
+            "attack": "LabelFlipping",
+            "seed": 117,
+            "status": "completed",
+        },
+        {
+            "dataset": "CIFAR10",
+            "aggregation": "Median",
+            "attack": "GradientAscent",
+            "seed": 1,
+            "status": "failed",
+        },
+    ]
+
+    filtered = filter_runs(
+        runs,
+        dataset="MNIST",
+        status="completed",
+    )
+
+    assert len(filtered) == 1
+    assert filtered[0]["aggregation"] == "FedAvg"
+
+
+def test_filter_runs_no_match():
+    runs = [
+        {
+            "dataset": "MNIST",
+            "aggregation": "FedAvg",
+            "attack": "none",
+            "seed": 1,
+            "status": "completed",
+        }
+    ]
+
+    filtered = filter_runs(
+        runs,
+        status="failed",
+    )
+
+    assert filtered == []
