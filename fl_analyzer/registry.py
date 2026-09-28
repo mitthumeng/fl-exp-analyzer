@@ -7,6 +7,7 @@ def load_run(run_dir):
 
     manifest_path = run_dir / "manifest.json"
     status_path = run_dir / "status.json"
+    retry_path = run_dir / "retry.json"
 
     if not manifest_path.exists():
         return None
@@ -20,6 +21,12 @@ def load_run(run_dir):
         with status_path.open("r", encoding="utf-8") as f:
             status = json.load(f)
 
+    retry_info = {}
+
+    if retry_path.exists():
+        with retry_path.open("r", encoding="utf-8") as f:
+            retry_info = json.load(f)
+
     experiment = manifest.get("experiment", {})
 
     return {
@@ -32,6 +39,7 @@ def load_run(run_dir):
         "started_at": status.get("started_at"),
         "finished_at": status.get("finished_at"),
         "return_code": status.get("return_code"),
+        "retry_of": retry_info.get("retry_of"),
         "path": str(run_dir),
     }
 
@@ -54,6 +62,7 @@ def list_runs(base_dir="runs"):
             runs.append(run)
 
     return runs
+
 
 def filter_runs(
     runs,
@@ -87,3 +96,15 @@ def filter_runs(
         filtered.append(run)
 
     return filtered
+
+
+def compute_retry_counts(runs):
+    counts = {}
+
+    for run in runs:
+        retry_of = run.get("retry_of")
+
+        if retry_of:
+            counts[retry_of] = counts.get(retry_of, 0) + 1
+
+    return counts

@@ -1,10 +1,18 @@
-# Failed Run Retry
+# Failed Run Retry and Retry Lineage
 
 ## Problem
 
-Failed experiment runs are preserved in the registry, but recovering
-from a failure currently requires manually reconstructing the original
+Failed experiment runs are preserved by the experiment platform, but
+recovering from them manually requires reconstructing the original
 configuration and execution command.
+
+Once retries are introduced, another problem appears: experiment history
+must preserve the relationship between the failed run and all subsequent
+retry attempts.
+
+Without explicit lineage information it becomes difficult to determine
+whether two experiment directories represent independent experiments or
+different attempts of the same experiment.
 
 ## Design
 
@@ -14,28 +22,13 @@ A failed run can be retried using its existing:
 - `status.json`
 - original execution command
 
-The retry creates a new run rather than modifying the failed run.
+The retry operation never modifies or overwrites the failed run.
 
-The new run stores `retry.json`, linking it to the original failed run.
+Instead, a new managed run is created.
 
-## External Behavior
+The new run contains a `retry.json` file:
 
-Users can run:
-
-`python retry_run.py <failed-run-directory>`
-
-Only runs whose status is `failed` may be retried.
-
-## Validation
-
-Tests verify:
-
-- successful retry of a failed run;
-- preservation of the original run;
-- creation of retry lineage metadata;
-- rejection of retries for completed runs.
-
-## Future Work
-
-Retry policies will later support retry limits, automatic retries,
-failure classification, and resume-from-checkpoint behavior.
+```json
+{
+  "retry_of": "original-run-id"
+}
